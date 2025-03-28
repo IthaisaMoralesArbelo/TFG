@@ -17,7 +17,7 @@ import hashlib
 from scapy.all import *
 import paramiko
 
-from funciones_auxiliares.cuantificacion import cuantificacion
+from funciones_auxiliares.cuantificacion import cuantificacion, desviacionTipica, cuantificacion_cuatro
 from funciones_auxiliares.reconciliacion import reconciliacion
 from funciones_auxiliares.amplificacion import amplificacion
 from funciones_auxiliares.sondeo import media
@@ -26,7 +26,7 @@ from funciones_auxiliares.sondeo import media
 INTERFACE = "wlxe4fac46f6fbf"    
 RSSI_FILE = "rssi_log.txt"
 RSSI_FILE_CANAL_B = "rssi_canal_b.txt"
-IP_SERVER = "10.20.52.42" 
+IP_SERVER = "10.20.52.154" 
 mac_cliente = "e4:fa:c4:6f:6f:bf"
 mac_servidor = "e4:fa:c4:6f:6f:6a"
 
@@ -169,7 +169,7 @@ def main():
         num_paquetes = int(command.split(" ")[1])
         intervalo = int(command.split(" ")[2])
         print(f"[CLIENT]: Comando de sondeo recibido. Número de paquetes: {num_paquetes}, intervalo: {intervalo}")
-        sock.connect(('10.20.52.42',5000))
+        sock.connect((IP_SERVER,5000))
         print("[CLIENT]: Cliente conectado al servidor.")
         exchange_rssi(sock, num_paquetes, intervalo)
         sondeo_check = True
@@ -184,10 +184,12 @@ def main():
         print("[CLIENT]: ERROR. Orden de ejecución incorrecto.")
       elif sondeo_check:
         valor_medio = media(RSSI_FILE)
+        desviacion_tipica = desviacionTipica(valor_medio, RSSI_FILE)
         print(f"[CLIENT]: Valor medio utilizado para la etapa de cuantificacion: {valor_medio}.")
-        secuencia = cuantificacion(valor_medio)
+        #secuencia = cuantificacion(valor_medio, desviacion_tipica,0, RSSI_FILE)
+        secuencia = cuantificacion_cuatro(valor_medio)
         print(f"[CLIENT]:Secuencia calculada por el CLIENT en la cuantificacion: {secuencia}.")
-        sock.connect(('192.168.1.34',5000))
+        sock.connect((IP_SERVER,5000))
         print("[CLIENT]: Cliente conectado al servidor.")
         server_secuencia = sock.recv(1024).decode()
         print(f"[CLIENT]: Secuencia recibida por el servidor: {server_secuencia}.")
