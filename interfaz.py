@@ -19,8 +19,8 @@ from funciones_auxiliares.reconciliacion import generarInfoReconciliacion
 from funciones_auxiliares.amplificacion import generarInfoAmplificacion
 
 
-SERVER_IP = "10.20.52.42"
-CLIENT_IP = "10.20.52.43"
+SERVER_IP = "10.20.52.154"
+CLIENT_IP = "10.20.52.155"
 
 # Variables para los sockets
 server_socket = None
@@ -60,7 +60,7 @@ def escuchar_mensajes():
     try:
       mensaje = server_socket.recv(1024).decode('utf-8')
       if mensaje == "INICIAR_GRAFICA":
-        app.after(0, iniciar_grafica, columna_derecha)  # Ejecutar en el hilo principal
+        app.after(0, iniciarGrafica, columna_derecha)  # Ejecutar en el hilo principal
         app.after(100, generarEstadisticas, columna_derecha, variable_numero_paquetes.get(), variable_tiempo.get())
         
       if mensaje.startswith("INFO_CUANTIFICACION"):

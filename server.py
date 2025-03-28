@@ -17,7 +17,7 @@ import os
 from scapy.all import *
 import paramiko
 
-from funciones_auxiliares.cuantificacion import cuantificacion
+from funciones_auxiliares.cuantificacion import cuantificacion, desviacionTipica, cuantificacion_cuatro
 from funciones_auxiliares.reconciliacion import reconciliacion
 from funciones_auxiliares.amplificacion import amplificacion
 
@@ -41,7 +41,7 @@ stop_beacons = False
 stop_sniff = False
 
 ########## valores para paramiko (sustituo de scp) ##########
-CLIENTE_IP = "10.20.52.43"  
+CLIENTE_IP = "10.20.52.155"  
 CLIENTE_USER = "raspberrypiclient"  
 CLIENTE_PASSWORD = "csas1234"  
 CLIENTE_RSSI_FILE = "/home/raspberrypiclient/Desktop/prueba/rssi_log.txt"  
@@ -255,68 +255,70 @@ def main():
         conn_i.send("INICIAR_GRAFICA".encode())
         print("[SERVER]: Sondeo del canal completado.")
       
-      elif comando == "CUANTIFICACION":
-        print("[SERVER]: Comando de cuantificación recibido.")
-        global secuencia, client_secuencia
-        if cuantificacion_check or reconciliacion_check or amplificacion_check:
-          print(f"[SERVER]:ERROR. Orden de ejecución incorrecto.")
-        elif sondeo_check:
-          valor_medio = media(RSSI_FILE)
-          print(f"[SERVER]: Valor medio utilizado para la etapa de cuantificacion: {valor_medio}.")
-          secuencia = cuantificacion(valor_medio)
-          print(f"Secuencia calculada por el SERVER en la cuantificacion: {secuencia}")
-          print("[SERVER]: Esperando a cliente que se conecte para enviarle la secuencia generada...")
-          conn, addr = sock.accept()
-          print(f"[SERVER]: Cliente conectado ({addr})")
-          conn.sendall(secuencia.encode())
-          print("[SERVER]: envinado secuencia al cliente")
-          client_secuencia = conn.recv(1024).decode()
-          print(f"[SERVER]: Secuencia recibida por el cliente: {client_secuencia}.")
-          conn.close()
-          cuantificacion_check = True
-          conn_i.send(f"INFO_CUANTIFICACION,{secuencia},{client_secuencia}".encode())
-          print("[SERVER]: Cuantificación completada.")
-        else:
-          print("[SERVER]: ERROR. No se ha realizado el sondeo del canal previamente.")
-
-
-      elif comando == "RECONCILIACION":
-        print("[SERVER]: Comando de reconciliacion recibido.")
-        if amplificacion_check or reconciliacion_check:
-          print("[SERVER]: ERROR. Orden de ejecución incorrecto. Ya se realizó esta etapa anteriormente.")
-        elif cuantificacion_check:
-          global secuencia_reconciliacion
-          secuencia_reconciliacion = reconciliacion(secuencia, client_secuencia)
-          print(f"[SERVER]: Secuencia resultante tras la reconciliacion: {secuencia_reconciliacion}.")
-          reconciliacion_check = True
-          conn_i.send(f"INFO_RECONCILIACION|{secuencia_reconciliacion}".encode())
-        else:
-          print("[SERVER]: ERROR. Orden de ejecución incorrecto. Debe realizar primero el sondeo del canal.")
-
-      elif comando == "AMPLIFICACION":
-        print("[SERVER]: Comando de amplificación recibido.")
-        if amplificacion_check:
-          print("[SERVER]: ERROR. Orden de ejecución incorrecto. Esta etapa ya se ha realizado.")
-        elif reconciliacion_check != True:
-          print("[SERVER]: ERROR. Debe realizar las etapas anteriores en el orden indicado.")
-        else:
-          clave_compartida = amplificacion(secuencia_reconciliacion)
-          amplificacion_check = True
-          conn_i.send(f"INFO_AMPLIFICACION,{cuantificacion}".encode())
-          print(f"CLAVE COMPARTIDA GENERADA : {clave_compartida}")
- 
-      elif comando == "CERRAR":
-        print("[SERVER]: Cerrando programa")
-        sock.close()
-        sock_interfaz.close()
-        sys.exit(0)
-        break;
-
+    elif comando == "CUANTIFICACION":
+      print("[SERVER]: Comando de cuantificación recibido.")
+      global secuencia, client_secuencia
+      if cuantificacion_check or reconciliacion_check or amplificacion_check:
+        print(f"[SERVER]:ERROR. Orden de ejecución incorrecto.")
+      elif sondeo_check:
+        valor_medio = media(RSSI_FILE)
+        desviacion_tipica = desviacionTipica(valor_medio, RSSI_FILE)
+        print(f"[SERVER]: Valor medio utilizado para la etapa de cuantificacion: {valor_medio}.")
+        #secuencia = cuantificacion(valor_medio,desviacion_tipica,0,RSSI_FILE)
+        secuencia = cuantificacion_cuatro(valor_medio)
+        print(f"Secuencia calculada por el SERVER en la cuantificacion: {secuencia}")
+        print("[SERVER]: Esperando a cliente que se conecte para enviarle la secuencia generada...")
+        conn, addr = sock.accept()
+        print(f"[SERVER]: Cliente conectado ({addr})")
+        conn.sendall(secuencia.encode())
+        print("[SERVER]: envinado secuencia al cliente")
+        client_secuencia = conn.recv(1024).decode()
+        print(f"[SERVER]: Secuencia recibida por el cliente: {client_secuencia}.")
+        conn.close()
+        cuantificacion_check = True
+        conn_i.send(f"INFO_CUANTIFICACION,{secuencia},{client_secuencia}".encode())
+        print("[SERVER]: Cuantificación completada.")
       else:
-        print(f"[SERVER] Comando recibido por la interfaz desconocido: {comando}")
-        sock.close()
-        sock_interfaz.close()
-        sys.exit(1)
+        print("[SERVER]: ERROR. No se ha realizado el sondeo del canal previamente.")
+
+
+    elif comando == "RECONCILIACION":
+      print("[SERVER]: Comando de reconciliacion recibido.")
+      if amplificacion_check or reconciliacion_check:
+        print("[SERVER]: ERROR. Orden de ejecución incorrecto. Ya se realizó esta etapa anteriormente.")
+      elif cuantificacion_check:
+        global secuencia_reconciliacion
+        secuencia_reconciliacion = reconciliacion(secuencia, client_secuencia)
+        print(f"[SERVER]: Secuencia resultante tras la reconciliacion: {secuencia_reconciliacion}.")
+        reconciliacion_check = True
+        conn_i.send(f"INFO_RECONCILIACION|{secuencia_reconciliacion}".encode())
+      else:
+        print("[SERVER]: ERROR. Orden de ejecución incorrecto. Debe realizar primero el sondeo del canal.")
+
+    elif comando == "AMPLIFICACION":
+      print("[SERVER]: Comando de amplificación recibido.")
+      if amplificacion_check:
+        print("[SERVER]: ERROR. Orden de ejecución incorrecto. Esta etapa ya se ha realizado.")
+      elif reconciliacion_check != True:
+        print("[SERVER]: ERROR. Debe realizar las etapas anteriores en el orden indicado.")
+      else:
+        clave_compartida = amplificacion(secuencia_reconciliacion)
+        amplificacion_check = True
+        conn_i.send(f"INFO_AMPLIFICACION,{cuantificacion}".encode())
+        print(f"CLAVE COMPARTIDA GENERADA : {clave_compartida}")
+ 
+    elif comando == "CERRAR":
+      print("[SERVER]: Cerrando programa")
+      sock.close()
+      sock_interfaz.close()
+      sys.exit(0)
+      break;
+
+    else:
+      print(f"[SERVER] Comando recibido por la interfaz desconocido: {comando}")
+      sock.close()
+      sock_interfaz.close()
+      sys.exit(1)
 
 
 
