@@ -9,6 +9,7 @@ import tkinter as tk
 import os
 import re
 import math
+import numpy as np
 from collections import Counter
 
 
@@ -34,7 +35,7 @@ def media(rssi_file):
     return sum(rssi) / len(rssi)
   return 0
 
-def desviacion_tipica(media, rssi_file):
+def desviacionTipica(media, rssi_file):
   if os.path.exists(rssi_file):
     with open(rssi_file, "r") as f:
       rssi = []
@@ -57,13 +58,16 @@ def cuantificacion(media, desviacion_tipica, valor, rssi_file):
           timestamp = match.group(1)
           rssi = int(match.group(2))
         if rssi > rangoSuperior:
-          secuencia.append(1)
+          secuencia.append('1')
         elif rssi < rangoInferior:
-          secuencia.append(0)
+          secuencia.append('0')
+  print("media",media)
+  print("desviacion", desviacion_tipica)
+  secuencia = ''.join(secuencia)
   return secuencia
 
   ###### OPCIÓN 2 ######
-def cuantificacion(rssi_file):
+def cuantificacion_dos(rssi_file):
   if os.path.exists(rssi_file):
     with open(rssi_file, "r") as f:
       rssi = []
@@ -82,9 +86,9 @@ def cuantificacion(rssi_file):
 
 
   ###### OPCIÓN 3 ######
-def cuantificacion():
-  if os.path.exists(RSSI_FILE):
-    with open(RSSI_FILE, "r") as f:
+def cuantificacion_tres(rssi_file):
+  if os.path.exists(rssi_file):
+    with open(rssi_file, "r") as f:
       rssi = []
       for line in f:
         match = re.search(r"(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}), .*?, (-\d+)\s+dBm", line)
@@ -102,6 +106,7 @@ def cuantificacion():
         
       # Calcular el número de niveles
       n_niveles = 2 ** entropia_entera
+      n_niveles = max(n_niveles, 2)
       bits_por_nivel = math.log2(n_niveles)
         
       # Determinar los niveles de cuantificación
@@ -121,3 +126,37 @@ def cuantificacion():
       print("Niveles de cuantificación:", niveles)
       print("Códigos asignados:", codigos)
       print("Secuencia codificada:", secuencia_codificada)
+      return secuencia_codificada;
+
+  
+# Función que crea una lista de secuencias. Son 2^num_bits posibilidades
+def gray(num_bits):
+  codigos = []
+  for i in range(2 ** num_bits):
+    codigos.append(i ^ (i >> 1))
+  return codigos
+
+
+# Función variable
+def e(k):
+  return 1 if k % 4 == 2 else 0
+  
+def cuantificacion_cuatro(rssi, num_bits_secuencia = 8, y_min = -280, y_max = -180):
+  k = 4 * (2 ** num_bits_secuencia) 
+  umbrales = np.linspace(y_min, y_max, k - 1) # K - 1 umbrales, y_min y y_max son los min y max esperados en un RSSI
+  umbrales = [-np.inf] + list(umbrales) + [np.inf]
+  nivel_rssi = 0
+  while nivel_rssi < k and rssi > umbrales[nivel_rssi]:
+    nivel_rssi += 1
+  # Genero los códigos de Gray
+  codigos = gray(num_bits_secuencia)
+  # Calculo e(k) para saber si es 1 o 0
+  e_k = e(nivel_rssi)
+  if e_k == 1:
+    nivel_rssi = min(nivel_rssi, len(codigos) - 1)
+    resultado = codigos[nivel_rssi]
+  else:
+    # Gray desplazado
+    resultado = codigos[(nivel_rssi + 1) % len(codigos)]  
+  secuencia = format(resultado, f'0{num_bits_secuencia}b') 
+  return secuencia

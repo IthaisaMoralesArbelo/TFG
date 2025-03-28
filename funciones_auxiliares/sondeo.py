@@ -17,6 +17,8 @@ from matplotlib.animation import FuncAnimation
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2Tk
 from collections import Counter
 import math
+from collections import defaultdict
+
 
 ########### Variables y parámetros globales ########### 
 RSSI_FILE_A = "rssi_log.txt"
@@ -27,11 +29,17 @@ RSSI_FILE_CANAL_B = "rssi_canal_b.txt"
 media_rssi_a = 0
 media_rssi_b = 0
 
+rssi_a_total = []
+rssi_b_total = []
+timestamps = []
+rssi_values_a = []
+rssi_values_b = []
 rssi_a = {}
 rssi_b = {}
-
 rssi_canal_a = {}
 rssi_canal_b = {}
+
+
 
 
 
@@ -133,60 +141,80 @@ def entropia(rssi_file):
     print(f"[SERVER]: ERROR. No se encontró el archivo: {rssi_file}")
     return None
 
-
-
 def iniciarGrafica(frame_contenedor):
-  global figure, ax, canvas, toolbar, anim
-  limpiarContenedor(frame_contenedor)
+    global figure, ax, canvas, toolbar, anim
+    global timestamps, rssi_values_a, rssi_values_b
 
-  figure, ax = plt.subplots(figsize=(6, 4))
-  ax.set_title("Sondeo del canal")
-  ax.set_xlabel("Tiempo")
-  ax.set_ylabel("RSSI (dBm)")
-  ax.set_ylim(-40, 0)
+    # Limpiar contenedor
+    for widget in frame_contenedor.winfo_children():
+        widget.destroy()
 
-  canvas = FigureCanvasTkAgg(figure, master=frame_contenedor)
-  canvas.get_tk_widget().pack(fill="both", expand=True)
+    timestamps.clear()
+    rssi_values_a.clear()
+    rssi_values_b.clear()
 
-  toolbar = NavigationToolbar2Tk(canvas, frame_contenedor)
-  toolbar.update()
-  toolbar.pack(side="top", fill="x")
+    figure, ax = plt.subplots(figsize=(6, 4))
+    ax.set_title("Sondeo del canal")
+    ax.set_xlabel("Tiempo")
+    ax.set_ylabel("RSSI (dBm)")
+    ax.set_ylim(-40, 0)
 
-  anim = FuncAnimation(figure, actualizarGrafica, interval=1000, save_count=100)
+    canvas = FigureCanvasTkAgg(figure, master=frame_contenedor)
+    canvas.get_tk_widget().pack(fill="both", expand=True)
+
+    toolbar = NavigationToolbar2Tk(canvas, frame_contenedor)
+    toolbar.update()
+    toolbar.pack(side="top", fill="x")
+
+    anim = FuncAnimation(figure, actualizarGrafica, interval=1000, save_count=100)
 
 
 def actualizarGrafica(frame):
-  global ax, canvas, media_rssi_a, media_rssi_b
-  
-  media_rssi_a.clear()
-  media_rssi_b.clear()
+    global ax, canvas, timestamps
+    global media_rssi_a, media_rssi_b
+    if os.path.exists(RSSI_FILE_A):
+        with open(RSSI_FILE_A, "r") as f:
+            for line in f:
+                match = re.search(r"(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}), .*?, (-\d+)\s+dBm", line)
+                if match:
+                    timestamp = match.group(1)
+                    rssi = int(match.group(2))
+                    if timestamp not in rssi_a:
+                        rssi_a[timestamp] = []
+                    rssi_a[timestamp].append(rssi)
 
-  rssi_a = obtenerRssiArchivo(RSSI_FILE_A)
-  rssi_b = obtenerRssiArchivo(RSSI_FILE_B)
-  #Timestamps comunes en ambos archivos
-  timestamps = sorted(set(rssi_a.keys()) & set(rssi_b.keys())) 
+# Leer el archivo de B
+    if os.path.exists(RSSI_FILE_B):
+        with open(RSSI_FILE_B, "r") as f:
+            for line in f:
+                match = re.search(r"(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}), .*?, (-\d+)\s+dBm", line)
+                if match:
+                    timestamp = match.group(1)
+                    rssi = int(match.group(2))
+                    if timestamp not in rssi_b:
+                        rssi_b[timestamp] = []
+                    rssi_b[timestamp].append(rssi)
 
-  valores_a = [sum(rssi_a[t]) / len(rssi_a[t]) for t in timestamps]
-  valores_b = [sum(rssi_b[t]) / len(rssi_b[t]) for t in timestamps]
-  media_rssi_a = media(RSSI_FILE_A)
-  media_rssi_b = media(RSSI_FILE_B)
+# Calcular la media de RSSI por segundo
+    timestamps = sorted(set(rssi_a.keys()) & set(rssi_b.keys()))  # Solo timestamps en ambos archivos
+    valores_a = [sum(rssi_a[t]) / len(rssi_a[t]) for t in timestamps]
+    valores_b = [sum(rssi_b[t]) / len(rssi_b[t]) for t in timestamps]
+    media_rssi_a = media(RSSI_FILE_A)
+    media_rssi_b = media(RSSI_FILE_B)
+    ax.clear()
+    ax.set_title("Sondeo del canal")
+    ax.set_xlabel("Tiempo")
+    ax.set_ylabel("RSSI (dBm)")
+    ax.set_ylim(-40, 0)
 
-  min_val = min(valores_a + valores_b) - 20
-  max_val = max(valores_a + valores_b) + 20
+    ax.plot(timestamps, valores_a, 'o-', color='purple', label="RSSI A")
+    ax.plot(timestamps, valores_b, 's-', color='orange', label="RSSI B")
+    ax.axhline(media_rssi_a, color='purple', linestyle='dashed', label="RSSI A (media)")
+    ax.axhline(media_rssi_b, color='orange', linestyle='dashed', label="RSSI B (media)")
+    ax.legend()
 
-  ax.clear()
-  ax.set_title("Sondeo del canal")
-  ax.set_xlabel("Tiempo")
-  ax.set_ylabel("RSSI (dBm)")
-  ax.set_ylim(min_val, max_val)
+    canvas.draw()
 
-  ax.plot(timestamps, valores_a, 'o-', color='purple', label="RSSI A")
-  ax.plot(timestamps, valores_b, 's-', color='orange', label="RSSI B")
-  ax.axhline(media_rssi_a, color='purple', linestyle='dashed', label="RSSI A (media)")
-  ax.axhline(media_rssi_b, color='orange', linestyle='dashed', label="RSSI B (media)")
-  ax.legend()
-
-  canvas.draw()
 
 
 
@@ -219,84 +247,96 @@ def generarEstadisticas(frame, numero_paquetes, tiempo_entre_paquetes):
   tk.Label(recuadro, text=f"RSSI B: Valor máximo={min_canal_b}, mínimo={max_canal_b}", bg="white").pack(pady=5)
 
 
+
+       
 def iniciarSegundaGrafica(frame_contenedor):
-  global figure, ax, canvas, toolbar, anim
-  limpiarContenedor(frame_contenedor)  
+    global figure, ax, canvas, toolbar, anim, rssi_a, rssi_b, timestamps
+    rssi_a.clear()
+    rssi_b.clear()
+    rssi_canal_a.clear()
+    rssi_canal_b.clear()
 
-  figure, ax = plt.subplots(figsize=(6, 4))
-  ax.set_title("Sondeo del canal")
-  ax.set_xlabel("Tiempo")
-  ax.set_ylabel("RSSI (dBm)")
-  ax.set_ylim(-120, 0)
+    # Limpiar contenedor
+    for widget in frame_contenedor.winfo_children():
+        widget.destroy()
+    
+    figure, ax = plt.subplots(figsize=(6, 4))
+    ax.set_title("Sondeo del canal")
+    ax.set_xlabel("Tiempo")
+    ax.set_ylabel("RSSI (dBm)")
+    ax.set_ylim(-120, 0)
 
-  canvas = FigureCanvasTkAgg(figure, master=frame_contenedor)
-  canvas.get_tk_widget().pack(fill="both", expand=True)
+    canvas = FigureCanvasTkAgg(figure, master=frame_contenedor)
+    canvas.get_tk_widget().pack(fill="both", expand=True)
 
-  toolbar = NavigationToolbar2Tk(canvas, frame_contenedor)
-  toolbar.update()
-  toolbar.pack(side="top", fill="x")
+    toolbar = NavigationToolbar2Tk(canvas, frame_contenedor)
+    toolbar.update()
+    toolbar.pack(side="top", fill="x")
 
-  anim = FuncAnimation(figure, actualizarSegundaGrafica, interval=1000, save_count=100)
-
-
-  def leerArchivo(filename, diccionario):
-    if os.path.exists(filename):
-      with open(filename, "r") as f:
-        for line in f:
-          match = re.search(r"(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}), .*?, (-\d+)\s+dBm", line)
-          if match:
-            timestamp = match.group(1)
-            rssi = int(match.group(2))
-            if timestamp not in diccionario:
-              diccionario[timestamp] = []
-              diccionario[timestamp].append(rssi)
-
+    anim = FuncAnimation(figure, actualizarSegundaGrafica, interval=1000, save_count=100)
 
 def actualizarSegundaGrafica(frame):
-  global ax, canvas, rssi_a, rssi_b, rssi_canal_a, rssi_canal_b
-  
-  rssi_a.clear()
-  rssi_b.clear()
-  rssi_canal_a.clear()
-  rssi_canal_b.clear()
+    global figure, ax, canvas, toolbar, anim, rssi_a, rssi_b, timestamps
 
-  leerArchivo(RSSI_FILE_A, rssi_a)
-  leerArchivo(RSSI_FILE_B, rssi_b)
-  leerArchivo(RSSI_FILE_CANAL_A, rssi_canal_a)
-  leerArchivo(RSSI_FILE_CANAL_B, rssi_canal_b)
+    # Limpiar diccionarios de datos
+    rssi_a.clear()
+    rssi_b.clear()
+    rssi_canal_a.clear()
+    rssi_canal_b.clear()
 
-  timestamps = sorted(set(rssi_a.keys()) | set(rssi_b.keys()) | set(rssi_canal_a.keys()) | set(rssi_canal_b.keys()))
+    def leer_archivo(filename, diccionario):
+        """ Función para leer un archivo de RSSI y almacenar datos en un diccionario """
+        if os.path.exists(filename):
+            with open(filename, "r") as f:
+                for line in f:
+                    match = re.search(r"(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}), .*?, (-\d+)\s+dBm", line)
+                    if match:
+                        timestamp = match.group(1)
+                        rssi = int(match.group(2))
+                        if timestamp not in diccionario:
+                            diccionario[timestamp] = []
+                        diccionario[timestamp].append(rssi)
 
-  valores_a = [sum(rssi_a[t]) / len(rssi_a[t]) if t in rssi_a else None for t in timestamps]
-  valores_b = [sum(rssi_b[t]) / len(rssi_b[t]) if t in rssi_b else None for t in timestamps]
-  valores_canal_a = [sum(rssi_canal_a[t]) / len(rssi_canal_a[t]) if t in rssi_canal_a else None for t in timestamps]
-  valores_canal_b = [sum(rssi_canal_b[t]) / len(rssi_canal_b[t]) if t in rssi_canal_b else None for t in timestamps]
+    # Leer datos de los cuatro archivos
+    leer_archivo(RSSI_FILE_A, rssi_a)
+    leer_archivo(RSSI_FILE_B, rssi_b)
+    leer_archivo(RSSI_FILE_CANAL_A, rssi_canal_a)
+    leer_archivo(RSSI_FILE_CANAL_B, rssi_canal_b)
 
-  media_rssi_a = media_no_adaptativa(RSSI_FILE_A)
-  media_rssi_b = media_no_adaptativa(RSSI_FILE_B)
-  media_rssi_canal_a = media_no_adaptativa(RSSI_FILE_CANAL_A)
-  media_rssi_canal_b = media_no_adaptativa(RSSI_FILE_CANAL_B)
+    # Obtener timestamps comunes
+    timestamps = sorted(set(rssi_a.keys()) | set(rssi_b.keys()) | set(rssi_canal_a.keys()) | set(rssi_canal_b.keys()))
 
-  min_val = min(valores_a + valores_b) - 20
-  max_val = max(valores_a + valores_b) + 20
-    
-  ax.clear()
-  ax.set_title("Sondeo del canal")
-  ax.set_xlabel("Tiempo")
-  ax.set_ylabel("RSSI (dBm)")
-  ax.set_ylim(min_val, max_val)
+    # Calcular valores medios
+    valores_a = [sum(rssi_a[t]) / len(rssi_a[t]) if t in rssi_a else None for t in timestamps]
+    valores_b = [sum(rssi_b[t]) / len(rssi_b[t]) if t in rssi_b else None for t in timestamps]
+    valores_canal_a = [sum(rssi_canal_a[t]) / len(rssi_canal_a[t]) if t in rssi_canal_a else None for t in timestamps]
+    valores_canal_b = [sum(rssi_canal_b[t]) / len(rssi_canal_b[t]) if t in rssi_canal_b else None for t in timestamps]
 
-  
-  ax.plot(timestamps, valores_a, 'o-', color='purple', label="RSSI A")
-  ax.plot(timestamps, valores_b, 's-', color='orange', label="RSSI B")
 
-  ax.plot(timestamps, valores_canal_a, 'x-', color='gray', alpha=0.3, label="Todos desde A")
-  ax.plot(timestamps, valores_canal_b, 'd-', color='darkgray', alpha=0.3, label="Todos desde B")
+    media_rssi_a = media_no_adaptativa(RSSI_FILE_A)
+    media_rssi_b = media_no_adaptativa(RSSI_FILE_B)
+    media_rssi_canal_a = media_no_adaptativa(RSSI_FILE_CANAL_A)
+    media_rssi_canal_b = media_no_adaptativa(RSSI_FILE_CANAL_B)
+    # Limpiar gráfico
+    ax.clear()
+    ax.set_title("Sondeo del canal")
+    ax.set_xlabel("Tiempo")
+    ax.set_ylabel("RSSI (dBm)")
+    ax.set_ylim(-120, 0)
 
-  ax.axhline(media_rssi_a, color='purple', linestyle='dashed', label="RSSI A (media)")
-  ax.axhline(media_rssi_b, color='orange', linestyle='dashed', label="RSSI B (media)")
-  ax.axhline(media_rssi_canal_a, color='gray', linestyle='dashed', label="Todos desde A (media)")
-  ax.axhline(media_rssi_canal_b, color='darkgray', linestyle='dashed', label="Todos desde B (media)")
+    # Graficar dispositivos A y B con colores distintivos
+    ax.plot(timestamps, valores_a, 'o-', color='purple', label="RSSI A")
+    ax.plot(timestamps, valores_b, 's-', color='orange', label="RSSI B")
 
-  ax.legend()
-  canvas.draw()
+    # Graficar todos los dispositivos en gris
+    ax.plot(timestamps, valores_canal_a, 'x-', color='gray', alpha=0.3, label="Todos desde A")
+    ax.plot(timestamps, valores_canal_b, 'd-', color='darkgray', alpha=0.3, label="Todos desde B")
+
+    # Líneas de media
+    ax.axhline(media_rssi_a, color='purple', linestyle='dashed', label="RSSI A (media)")
+    ax.axhline(media_rssi_b, color='orange', linestyle='dashed', label="RSSI B (media)")
+    ax.axhline(media_rssi_canal_a, color='gray', linestyle='dashed', label="Todos desde A (media)")
+    ax.axhline(media_rssi_canal_b, color='darkgray', linestyle='dashed', label="Todos desde B (media)")
+
+    ax.legend()
+    canvas.draw()
