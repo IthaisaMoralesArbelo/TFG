@@ -11,7 +11,7 @@ import re
 import math
 import numpy as np
 from collections import Counter
-
+RSSI_FILE= "rssi_log.txt"
 
 def generarInfoCuantificacion(frame,secuencia_server, secuencia_client):
   recuadro = tk.Frame(frame, bg="white", bd=2, relief="solid", padx=10, pady=10)
@@ -21,6 +21,23 @@ def generarInfoCuantificacion(frame,secuencia_server, secuencia_client):
   tk.Label(recuadro, text=secuencia_server, bg="white").pack(pady=5)
   tk.Label(recuadro, text="Secuencia de bits de B", bg="white").pack(pady=5)
   tk.Label(recuadro, text=secuencia_client, bg="white").pack(pady=5)
+  tk.Label(recuadro, text="Tasa de desacuerdo de bits (BDR, Bit Disagreement Rate)", font=("Arial",18,"bold")).pack(pady=10)
+  bdr = tasaDesacuerdo(secuencia_server, secuencia_client)
+  tk.Label(recuadro, text=bdr, bg="white").pack(pady=5)
+  tk.Label(recuadro, text="Autocorrelación de la secuencia", font=("Arial",18,"bold")).pack(pady=10)
+  autocorrelacion_a = autocorrelacion(secuencia_server)
+  autocorrelacion_b = autocorrelacion(secuencia_client)
+  tk.Label(recuadro, text="Autocorrelación de la secuencia de A ", bg="white").pack(pady=5)
+  tk.Label(recuadro, text=autocorrelacion_a, bg="white").pack(pady=5)
+  tk.Label(recuadro, text="Autocorrelación de la secuencia de B", bg="white").pack(pady=5)
+  tk.Label(recuadro, text=autocorrelacion_b, bg="white").pack(pady=5)
+  tk.Label(recuadro, text="Entropía de la secuencia", font=("Arial",18,"bold")).pack(pady=10)
+  entropia_a = entropia(secuencia_server)
+  entropia_b = entropia(secuencia_client)
+  tk.Label(recuadro, text="Entropía de la secuencia de A ", bg="white").pack(pady=5)
+  tk.Label(recuadro, text=entropia_a, bg="white").pack(pady=5)
+  tk.Label(recuadro, text="Entropía de la secuencia de B", bg="white").pack(pady=5)
+  tk.Label(recuadro, text=entropia_b, bg="white").pack(pady=5)
 
 
 ###### OPCIÓN 1 ######
@@ -139,9 +156,12 @@ def gray(num_bits):
 
 # Función variable
 def e(k):
-  return 1 if k % 4 == 2 else 0
+  return 1 if (k % 3 == 1 or k % 5 == 3) else 0
   
 def cuantificacion_cuatro(rssi, num_bits_secuencia = 8, y_min = -280, y_max = -180):
+  y_min, y_max = valorMinimoMaximoRssi(RSSI_FILE)
+  print(y_min)
+  print(y_max)
   k = 4 * (2 ** num_bits_secuencia) 
   umbrales = np.linspace(y_min, y_max, k - 1) # K - 1 umbrales, y_min y y_max son los min y max esperados en un RSSI
   umbrales = [-np.inf] + list(umbrales) + [np.inf]
@@ -150,6 +170,7 @@ def cuantificacion_cuatro(rssi, num_bits_secuencia = 8, y_min = -280, y_max = -1
     nivel_rssi += 1
   # Genero los códigos de Gray
   codigos = gray(num_bits_secuencia)
+  nivel_rssi = (nivel_rssi * 7) % (2 ** num_bits_secuencia)
   # Calculo e(k) para saber si es 1 o 0
   e_k = e(nivel_rssi)
   if e_k == 1:
@@ -160,3 +181,49 @@ def cuantificacion_cuatro(rssi, num_bits_secuencia = 8, y_min = -280, y_max = -1
     resultado = codigos[(nivel_rssi + 1) % len(codigos)]  
   secuencia = format(resultado, f'0{num_bits_secuencia}b') 
   return secuencia
+  
+  
+def tasaDesacuerdo(secuencia_server, secuencia_client):
+  assert(len(secuencia_server) == len(secuencia_client)), "Las secuencias generadas tienen longitudes diferentes"
+  diferencias = 0
+  for a,b in zip(secuencia_server, secuencia_client):
+    if a != b:
+      diferencias += 1
+  return diferencias / len(secuencia_server)
+  
+def autocorrelacion(secuencia):
+  secuencia = [int(x) for x in secuencia]
+  k = 1
+  n = len(secuencia)
+  if k >= n:
+    return 0
+  suma = 0
+  for i in range(n-k):
+    suma += secuencia[i]*secuencia[i+k]
+  media = sum(secuencia) / n
+  varianza = sum((i - media) ** 2 for i in secuencia) / n
+  if varianza == 0:
+    return 0
+  else :
+    return (suma / (n-k)-media**2)/varianza
+    
+def entropia(secuencia):
+  conteo = Counter(secuencia)
+  total=len(secuencia)
+  prob = [freq/total for freq in conteo.values()]
+  resultado = -sum(p*np.log2(p) for p in prob)
+  return resultado
+  
+
+def valorMinimoMaximoRssi(rssi_file):
+  if os.path.exists(rssi_file):
+    with open(rssi_file, "r") as f:
+      rssi = []
+      for line in f:
+        match = re.search(r"(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}), .*?, (-\d+)\s+dBm", line)
+        if match:
+          rssi.append(int(match.group(2)))
+    return min(rssi), max(rssi)
+  else:
+    print(f"[SERVER]: ERROR. No se encontró el archivo: {rssi_file}")
+    return None, None
