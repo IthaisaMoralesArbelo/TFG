@@ -17,7 +17,7 @@ import hashlib
 from scapy.all import *
 import paramiko
 
-from funciones_auxiliares.cuantificacion import cuantificacion, desviacionTipica, cuantificacion_cuatro
+from funciones_auxiliares.cuantificacion import cuantificacion, desviacionTipica, cuantificacion_cuatro,cuantificacion_dos, cuantificacion_tres
 from funciones_auxiliares.reconciliacion import reconciliacion
 from funciones_auxiliares.amplificacion import amplificacion
 from funciones_auxiliares.sondeo import media
@@ -26,7 +26,7 @@ from funciones_auxiliares.sondeo import media
 INTERFACE = "wlxe4fac46f6fbf"    
 RSSI_FILE = "rssi_log.txt"
 RSSI_FILE_CANAL_B = "rssi_canal_b.txt"
-IP_SERVER = "10.20.52.154" 
+IP_SERVER = "10.20.52.193" 
 mac_cliente = "e4:fa:c4:6f:6f:bf"
 mac_servidor = "e4:fa:c4:6f:6f:6a"
 
@@ -186,7 +186,9 @@ def main():
         valor_medio = media(RSSI_FILE)
         desviacion_tipica = desviacionTipica(valor_medio, RSSI_FILE)
         print(f"[CLIENT]: Valor medio utilizado para la etapa de cuantificacion: {valor_medio}.")
-        #secuencia = cuantificacion(valor_medio, desviacion_tipica,0, RSSI_FILE)
+        #secuencia = cuantificacion(valor_medio, desviacion_tipica,10, RSSI_FILE)
+        #secuencia = cuantificacion_dos(RSSI_FILE, desviacion_tipica)
+        #secuencia = cuantificacion_tres(RSSI_FILE)
         secuencia = cuantificacion_cuatro(valor_medio)
         print(f"[CLIENT]:Secuencia calculada por el CLIENT en la cuantificacion: {secuencia}.")
         sock.connect((IP_SERVER,5000))
