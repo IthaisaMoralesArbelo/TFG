@@ -19,8 +19,8 @@ from funciones_auxiliares.reconciliacion import generarInfoReconciliacion
 from funciones_auxiliares.amplificacion import generarInfoAmplificacion
 
 
-SERVER_IP = "10.20.52.154"
-CLIENT_IP = "10.20.52.155"
+SERVER_IP = "10.20.52.193"
+CLIENT_IP = "10.20.52.194"
 
 # Variables para los sockets
 server_socket = None

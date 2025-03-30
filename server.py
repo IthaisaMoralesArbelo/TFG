@@ -17,7 +17,7 @@ import os
 from scapy.all import *
 import paramiko
 
-from funciones_auxiliares.cuantificacion import cuantificacion, desviacionTipica, cuantificacion_cuatro
+from funciones_auxiliares.cuantificacion import cuantificacion, desviacionTipica, cuantificacion_cuatro, cuantificacion_dos, cuantificacion_tres
 from funciones_auxiliares.reconciliacion import reconciliacion
 from funciones_auxiliares.amplificacion import amplificacion
 
@@ -41,7 +41,7 @@ stop_beacons = False
 stop_sniff = False
 
 ########## valores para paramiko (sustituo de scp) ##########
-CLIENTE_IP = "10.20.52.155"  
+CLIENTE_IP = "10.20.52.194"  
 CLIENTE_USER = "raspberrypiclient"  
 CLIENTE_PASSWORD = "csas1234"  
 CLIENTE_RSSI_FILE = "/home/raspberrypiclient/Desktop/prueba/rssi_log.txt"  
@@ -264,7 +264,9 @@ def main():
         valor_medio = media(RSSI_FILE)
         desviacion_tipica = desviacionTipica(valor_medio, RSSI_FILE)
         print(f"[SERVER]: Valor medio utilizado para la etapa de cuantificacion: {valor_medio}.")
-        #secuencia = cuantificacion(valor_medio,desviacion_tipica,0,RSSI_FILE)
+        #secuencia = cuantificacion(valor_medio,desviacion_tipica,10,RSSI_FILE)
+        #secuencia = cuantificacion_dos(RSSI_FILE,desviacion_tipica)
+        #secuencia = cuantificacion_tres(RSSI_FILE)
         secuencia = cuantificacion_cuatro(valor_medio)
         print(f"Secuencia calculada por el SERVER en la cuantificacion: {secuencia}")
         print("[SERVER]: Esperando a cliente que se conecte para enviarle la secuencia generada...")
