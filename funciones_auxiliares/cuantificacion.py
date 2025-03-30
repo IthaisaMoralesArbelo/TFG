@@ -63,10 +63,13 @@ def desviacionTipica(media, rssi_file):
     return (sum(rssi) / len(rssi)) ** 0.5
   return 0
 
-def cuantificacion(media, desviacion_tipica, valor, rssi_file):
+def cuantificacion(media, desviacion_tipica, valor,rssi_file):
   secuencia = []
-  rangoSuperior = media + valor * desviacion_tipica
-  rangoInferior = media - valor * desviacion_tipica
+  contador = 0
+  rangoSuperior = media - 1 * desviacion_tipica
+  rangoInferior = media + 1 * desviacion_tipica
+  print(rangoSuperior)
+  print(rangoInferior)
   if os.path.exists(rssi_file):
     with open(rssi_file, "r") as f:
       for line in f:
@@ -74,17 +77,21 @@ def cuantificacion(media, desviacion_tipica, valor, rssi_file):
         if match:
           timestamp = match.group(1)
           rssi = int(match.group(2))
-        if rssi > rangoSuperior:
-          secuencia.append('1')
-        elif rssi < rangoInferior:
-          secuencia.append('0')
+          contador += 1
+        if contador > valor: 
+          break
+        else :
+          if rssi > rangoSuperior:
+            secuencia.append('1')
+          elif rssi < rangoInferior:
+            secuencia.append('0')
   print("media",media)
   print("desviacion", desviacion_tipica)
   secuencia = ''.join(secuencia)
   return secuencia
 
   ###### OPCIÓN 2 ######
-def cuantificacion_dos(rssi_file):
+def cuantificacion_dos(rssi_file,desviacion_tipica):
   if os.path.exists(rssi_file):
     with open(rssi_file, "r") as f:
       rssi = []
@@ -93,11 +100,12 @@ def cuantificacion_dos(rssi_file):
         if match:
           rssi.append(int(match.group(2)))
     secuencia = []
-    for i in range(1, len(rssi)):
-      if rssi[i] < rssi[i-1]:
-        secuencia.append(0)
+    for i in range(1, 10):
+      if (rssi[i] - rssi[i-1])<= desviacion_tipica:
+        secuencia.append('0')
       else:
-        secuencia.append(1)
+        secuencia.append('1')
+    secuencia = ''.join(secuencia)
     return secuencia
   return 0
 
@@ -128,10 +136,10 @@ def cuantificacion_tres(rssi_file):
         
       # Determinar los niveles de cuantificación
       rssi_min, rssi_max = min(rssi), max(rssi)
-      niveles = [rssi_min + i * (rssi_max - rssi_min) / (n_niveles - 1) for i in range(n_niveles)]
+      niveles = np.linspace(rssi_min,rssi_max,total_medidas)
         
       # Asignar códigos binarios a los niveles
-      codigos = {niveles[i]: format(i, f'0{int(bits_por_nivel)}b') for i in range(n_niveles)}
+      codigos = {niveles[i]: format(i, f'0{int(total_medidas)}b') for i in range(total_medidas)}
         
       # Generar la secuencia final codificada
       secuencia_codificada = "".join(codigos[min(niveles, key=lambda x: abs(x - valor))] for valor in rssi)
