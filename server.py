@@ -18,7 +18,7 @@ from scapy.all import *
 import paramiko
 
 from funciones_auxiliares.cuantificacion import cuantificacion, desviacionTipica, cuantificacion_cuatro, cuantificacion_dos, cuantificacion_tres
-from funciones_auxiliares.reconciliacion import reconciliacion
+from funciones_auxiliares.reconciliacion import iniciarReconciliacion
 from funciones_auxiliares.amplificacion import amplificacion
 
 from funciones_auxiliares.sondeo import  iniciarGrafica, media
@@ -41,7 +41,7 @@ stop_beacons = False
 stop_sniff = False
 
 ########## valores para paramiko (sustituo de scp) ##########
-CLIENTE_IP = "10.20.52.194"  
+CLIENTE_IP = "10.20.50.19"  
 CLIENTE_USER = "raspberrypiclient"  
 CLIENTE_PASSWORD = "csas1234"  
 CLIENTE_RSSI_FILE = "/home/raspberrypiclient/Desktop/prueba/rssi_log.txt"  
@@ -276,7 +276,7 @@ def main():
         print("[SERVER]: envinado secuencia al cliente")
         client_secuencia = conn.recv(1024).decode()
         print(f"[SERVER]: Secuencia recibida por el cliente: {client_secuencia}.")
-        conn.close()
+        #conn.close()
         cuantificacion_check = True
         conn_i.send(f"INFO_CUANTIFICACION,{secuencia},{client_secuencia}".encode())
         print("[SERVER]: Cuantificación completada.")
@@ -290,10 +290,15 @@ def main():
         print("[SERVER]: ERROR. Orden de ejecución incorrecto. Ya se realizó esta etapa anteriormente.")
       elif cuantificacion_check:
         global secuencia_reconciliacion
-        secuencia_reconciliacion = reconciliacion(secuencia, client_secuencia)
+        print("[SERVER]: Esperando a cliente que se conecte.")
+        #conn, addr = sock.accept()
+        print(f"[SERVER]: Cliente conectado ({addr})")
+        secuencia_reconciliacion = iniciarReconciliacion(conn, secuencia)
+        secuencia_reconciliacion = ''.join(secuencia_reconciliacion)
+        conn.close()
         print(f"[SERVER]: Secuencia resultante tras la reconciliacion: {secuencia_reconciliacion}.")
         reconciliacion_check = True
-        conn_i.send(f"INFO_RECONCILIACION|{secuencia_reconciliacion}".encode())
+        conn_i.send(f"INFO_RECONCILIACION,{secuencia_reconciliacion},{secuencia},{client_secuencia}".encode())
       else:
         print("[SERVER]: ERROR. Orden de ejecución incorrecto. Debe realizar primero el sondeo del canal.")
 

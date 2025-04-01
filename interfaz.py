@@ -19,8 +19,8 @@ from funciones_auxiliares.reconciliacion import generarInfoReconciliacion
 from funciones_auxiliares.amplificacion import generarInfoAmplificacion
 
 
-SERVER_IP = "10.20.52.193"
-CLIENT_IP = "10.20.52.194"
+SERVER_IP = "10.20.50.20"
+CLIENT_IP = "10.20.50.19"
 
 # Variables para los sockets
 server_socket = None
@@ -70,9 +70,11 @@ def escuchar_mensajes():
         secuencia_cliente = parametros[2]
         app.after(0, generarInfoCuantificacion, columna_derecha, secuencia, secuencia_cliente)
       if mensaje.startswith("INFO_RECONCILIACION"):
-        parametros = mensaje.split("|")
-        secuencia = parametros[1]
-        app.after(0, generarInfoReconciliacion, columna_derecha, secuencia)
+        parametros = mensaje.split(",")
+        secuencia_reconciliada = parametros[1]
+        secuencia = parametros[2]
+        secuencia_cliente = parametros[3]
+        app.after(0, generarInfoReconciliacion, columna_derecha, secuencia_reconciliada, secuencia, secuencia_cliente)
       if mensaje.startswith("INFO_AMPLIFICACION"):
         parametros = mensaje.split(",")
         clave = parametros[1]
