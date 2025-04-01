@@ -18,7 +18,7 @@ from scapy.all import *
 import paramiko
 
 from funciones_auxiliares.cuantificacion import cuantificacion, desviacionTipica, cuantificacion_cuatro,cuantificacion_dos, cuantificacion_tres
-from funciones_auxiliares.reconciliacion import reconciliacion
+from funciones_auxiliares.reconciliacion import iniciarReconciliacion
 from funciones_auxiliares.amplificacion import amplificacion
 from funciones_auxiliares.sondeo import media
 
@@ -26,7 +26,7 @@ from funciones_auxiliares.sondeo import media
 INTERFACE = "wlxe4fac46f6fbf"    
 RSSI_FILE = "rssi_log.txt"
 RSSI_FILE_CANAL_B = "rssi_canal_b.txt"
-IP_SERVER = "10.20.52.193" 
+IP_SERVER = "10.20.50.20" 
 mac_cliente = "e4:fa:c4:6f:6f:bf"
 mac_servidor = "e4:fa:c4:6f:6f:6a"
 
@@ -196,7 +196,7 @@ def main():
         server_secuencia = sock.recv(1024).decode()
         print(f"[CLIENT]: Secuencia recibida por el servidor: {server_secuencia}.")
         sock.sendall(secuencia.encode())
-        sock.close()
+        #sock.close()
         cuantificacion_check = True
         print("[CLIENT]: Cuantificación completada.")
       else:
@@ -208,7 +208,10 @@ def main():
         print("[SERVER]: ERROR. Orden de ejecución incorrecto. Ya se realizó esta etapa anteriormente.")
       elif cuantificacion_check:
         global secuencia_reconciliacion
-        secuencia_reconciliacion = reconciliacion(secuencia, server_secuencia)
+        #sock.connect((IP_SERVER,5000))
+        secuencia_reconciliacion = iniciarReconciliacion(sock, secuencia)
+        secuencia_reconciliacion = ''.join(secuencia_reconciliacion)
+        sock.close()
         print(f"[CLIENT]: Secuencia resultante tras la reconciliación: {secuencia_reconciliacion}.")
         reconciliacion_check = True
 
