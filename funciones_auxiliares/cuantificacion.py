@@ -166,7 +166,7 @@ def gray(num_bits):
 def e(k):
   return 1 if (k % 3 == 1 or k % 5 == 3) else 0
   
-def cuantificacion_cuatro(rssi, num_bits_secuencia = 8, y_min = -280, y_max = -180):
+def cuantificacion_cuatro(rssi, num_bits_secuencia = 16, y_min = -280, y_max = -180):
   y_min, y_max = valorMinimoMaximoRssi(RSSI_FILE)
   print(y_min)
   print(y_max)
