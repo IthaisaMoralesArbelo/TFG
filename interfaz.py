@@ -19,8 +19,8 @@ from funciones_auxiliares.reconciliacion import generarInfoReconciliacion
 from funciones_auxiliares.amplificacion import generarInfoAmplificacion
 
 
-SERVER_IP = "10.20.50.20"
-CLIENT_IP = "10.20.50.19"
+SERVER_IP = "10.20.51.19"
+CLIENT_IP = "10.20.51.18"
 
 # Variables para los sockets
 server_socket = None
@@ -209,7 +209,70 @@ cuerpo.pack(fill = "both", expand = True)
 #columna_derecha = tk.Frame(cuerpo, bg="white")
 columna_derecha = crear_frame_desplazable(cuerpo)
 #columna_derecha.pack(side="right", fill="both", expand=True, padx=20, pady=10)
-texto_columna_derecha = tk.Label(columna_derecha, text="Columna derecha", font=app.font, bg="white").pack(pady=10)
+#texto_columna_derecha = tk.Label(columna_derecha, text="Columna derecha", font=app.font, bg="white").pack(pady=10)
+recuadro = tk.Frame(columna_derecha, bg="white", bd=2, relief="solid", padx=100, pady=100)
+recuadro.pack(fill="both", expand=True, padx=20, pady=20, anchor="w")
+tk.Label(
+    recuadro,
+    text="Instrucciones de modo de uso del sistema",
+    font=("Arial", 20, "bold")
+).pack(pady=10, fill="x")
+instrucciones = [
+    "1. Rellenar los campos 'Número de paquetes a enviar' y 'Tiempo entre paquetes'.",
+    "2. Ir seleccionando de forma ordenada las opciones del menú. En caso de seleccionar las etapas de forma desordenada, estas no se llevarán a cabo.",
+    "3. En 'Información del proyecto' encontrará un QR para revisar la documentación.",
+    "4. En el caso que desee guardar los datos generados durante la ejecución pulse 'Descargar PDF'."
+]
+for paso in instrucciones:
+    tk.Label(recuadro, text=paso, anchor="w", bg="white", font=("Helvetica", 13)).pack(fill="x", padx=5)
+
+
+espaciador = tk.Frame(recuadro, height=30, bg="white")
+espaciador.pack(fill="x", expand=False)
+
+tabla_etapas = ttk.Treeview(recuadro, columns=("Etapa", "Descripción"), show="headings", height=5)
+tabla_etapas.heading("Etapa", text="Etapa")
+tabla_etapas.heading("Descripción", text="Descripción")
+
+tabla_etapas.column("Etapa", width=80)
+tabla_etapas.column("Descripción")
+
+etapas_info = [
+    ("Sondeo cel canal", "Captura de paquetes entre las dos Raspberry's con el objetivo de obtener mediciones de RSSI del canal."),
+    ("Cuantificación", "Conversión de los valores analógicos de RSSI en una secuencia binaria."),
+    ("Reconciliación", "Proceso de comparación de las secuencias cliente y servidor hasta definir una secuencia común."),
+    ("Amplificación de privacidad", "Proceso de amplificación de la secuencia común para aumentar la seguridad.")
+]
+
+for etapa, desc in etapas_info:
+    tabla_etapas.insert("", "end", values=(etapa, desc))
+
+tabla_etapas.pack(fill="x", expand=False)
+
+espaciador = tk.Frame(recuadro, height=30, bg="white")
+espaciador.pack(fill="x", expand=False)
+
+tk.Label(
+    recuadro,
+    text="Glosario de términos",
+    font=("Arial", 20, "bold")
+).pack(pady=10, fill="x")
+
+glosario = [
+    "* RSSI  -->  Received Signal Strength Indicator. Medida de la intensidad de la señal recibida.",
+    "* Entropía  -->  En nuestro caso, grado de aleatoridad de las medidas o de la secuencia generada.",
+    "* BDR  -->  Tasa de desacuerdo de bits (Bit disagreement rate).",
+    "* Autocorrelación  -->  Mide cómo un valor en la secuencia se relaciona con otro valor desplazado por k posiciones.",
+    "* Métrica de Hamming  -->   Cuantifica la diferencia entre dos secuencias binarias del mismo tamaño.",
+    "* Hash  -->  Función criptográfica que transofroma una entrada en una salida de longitud fija, irreconocible y única.",
+    "* Reciprocidad del canal  -->  Condición del canal. Las características del canal son similares en ambas direcciones .",
+    "* Variación temporal  -->  Condición del canal. Las características del canal varían con el tiempo.",
+    "* Decorrelación espacial  -->  Condición del canal. Las características del canal varían significativamente con pequeñas variaciones en la posición espacial."
+]
+for termino in glosario:
+    tk.Label(recuadro, text=termino, anchor="w", bg="white", font=("Helvetica", 13)).pack(fill="x", padx=5)
+espaciador = tk.Frame(recuadro, height=30, bg="white")
+espaciador.pack(fill="x", expand=False)
 
 
 ####### Columna izquierda #######
@@ -229,7 +292,7 @@ entrada_numero_paquetes.pack(fill = "x", pady = 5)
 
 # Tiempo entre paquetes
 variable_tiempo = tk.StringVar(columna_izquierda)
-tiempo_entre_paquetes = tk.Label(columna_izquierda, text = "Tiempo entre paquetes (ms)", font = app.font, bg = 'white')
+tiempo_entre_paquetes = tk.Label(columna_izquierda, text = "Tiempo entre paquetes (s)", font = app.font, bg = 'white')
 tiempo_entre_paquetes.pack(fill = "x", pady = 5)
 entrada_tiempo = tk.Entry(columna_izquierda, font = app.font, textvariable = variable_tiempo)
 entrada_tiempo.pack(fill = "x", pady = 5)

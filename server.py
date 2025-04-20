@@ -7,19 +7,20 @@
 # Fichero server.py
 
 #!/usr/bin/env python3
+import sys
+sys.path.append("/home/raspberrypiserver/Desktop/pqcIoT/pyascon")
+from asconv1 import ascon_hash
 import threading
 import socket
 import datetime
 import hashlib
 import time
-import sys
 import os
 from scapy.all import *
 import paramiko
 
 from funciones_auxiliares.cuantificacion import cuantificacion, desviacionTipica, cuantificacion_cuatro, cuantificacion_dos, cuantificacion_tres
 from funciones_auxiliares.reconciliacion import iniciarReconciliacion
-from funciones_auxiliares.amplificacion import amplificacion
 
 from funciones_auxiliares.sondeo import  iniciarGrafica, media
 
@@ -41,7 +42,7 @@ stop_beacons = False
 stop_sniff = False
 
 ########## valores para paramiko (sustituo de scp) ##########
-CLIENTE_IP = "10.20.50.19"  
+CLIENTE_IP = "10.20.51.18"  
 CLIENTE_USER = "raspberrypiclient"  
 CLIENTE_PASSWORD = "csas1234"  
 CLIENTE_RSSI_FILE = "/home/raspberrypiclient/Desktop/prueba/rssi_log.txt"  
@@ -309,9 +310,10 @@ def main():
       elif reconciliacion_check != True:
         print("[SERVER]: ERROR. Debe realizar las etapas anteriores en el orden indicado.")
       else:
-        clave_compartida = amplificacion(secuencia_reconciliacion)
+        secuencia_bits = ''.join(secuencia_reconciliacion).encode() 
+        clave_compartida = ascon_hash(secuencia_bits, variant="Ascon-Hash256", hashlength=32)
         amplificacion_check = True
-        conn_i.send(f"INFO_AMPLIFICACION,{cuantificacion}".encode())
+        conn_i.send(f"INFO_AMPLIFICACION,{clave_compartida.hex()}".encode())
         print(f"CLAVE COMPARTIDA GENERADA : {clave_compartida}")
  
     elif comando == "CERRAR":
