@@ -22,6 +22,7 @@ import os
 import re
 import tkinter as tk
 
+import funciones_auxiliares.estadisticasPDF as archivo
 
 ########### Variables y parámetros globales ########### 
 RSSI_FILE_A = "rssi_log.txt"
@@ -362,3 +363,26 @@ def generarEstadisticas(frame, numero_paquetes, tiempo_entre_paquetes):
   min_canal_b, max_canal_b = valorMinimoMaximoRssi(RSSI_FILE_CANAL_B)
   tk.Label(recuadro, text=f"RSSI A: Valor máximo={min_canal_a}, mínimo={max_canal_a}", bg="white").pack(pady=5)
   tk.Label(recuadro, text=f"RSSI B: Valor máximo={min_canal_b}, mínimo={max_canal_b}", bg="white").pack(pady=5)
+  
+  archivo.informacion += f'''
+  =============== SONDEO ===============
+  Estadísticas de la comunicación:
+  Número de paquetes enviados: {numero_paquetes}
+  Tiempo entre paquetes: {tiempo_entre_paquetes}
+  Medias simples de RSSI:
+  RSSI A: Media={media_no_adaptativa(RSSI_FILE_A):.2f}
+  RSSI B: Media={media_rssi_b:.2f}
+  Valores RSSI medios tras hacer un filtrado de ruido
+  RSSI A: Media={media_rssi_a:.2f}
+  RSSI B: Media={media_rssi_b:.2f}
+  Entropía del canal
+  Entropía medida por A: {entropia(RSSI_FILE_A):.2f}
+  Entropía medida por B: {entropia(RSSI_FILE_B):.2f}
+  Valores mínimo y máximo de RSSI del canal entre A y B:
+  RSSI A: Valor máximo={min_a}, mínimo={max_a}
+  RSSI B: Valor máximo={min_b}, mínimo={max_b}
+  Valores mínimo y máximo de RSSI en el canal de entre todos los dispositivos
+  RSSI A: Valor máximo={min_canal_a}, mínimo={max_canal_a}
+  RSSI B: Valor máximo={min_canal_b}, mínimo={max_canal_b}
+  
+  '''

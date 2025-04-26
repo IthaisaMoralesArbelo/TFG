@@ -14,6 +14,7 @@ import os
 import re
 import tkinter as tk
 
+import funciones_auxiliares.estadisticasPDF as archivo
 
 ########### Variables y parámetros globales ########### 
 
@@ -126,6 +127,20 @@ def generarInfoCuantificacion(frame,secuencia_server, secuencia_client):
   tk.Label(recuadro, text=entropia_a, bg="white").pack(pady=5)
   tk.Label(recuadro, text="Entropía de la secuencia de B", bg="white").pack(pady=5)
   tk.Label(recuadro, text=entropia_b, bg="white").pack(pady=5)
+  
+  archivo.informacion += f'''
+  =============== CUANTIFICACIÓN ===============
+  Secuencia de bits de A: {secuencia_server}
+  Secuencia de bits de B: {secuencia_client}
+  Tasa de desacuerdo de bits (BDR, Bit Disagreement Rate): {bdr}
+  Autocorrelación de las secuencias:
+  Autocorrelación de la secuencia de A: {autocorrelacion_a}
+  Autocorrelación de la secuencia de B: {autocorrelacion_b}
+  Entropías de las secuencias
+  Entropía de la secuencia de A: {entropia_a}
+  Entropía de la secuencia de B: {entropia_b}
+  
+  '''
 
 
 ###### Algoritmo de Mathur ######

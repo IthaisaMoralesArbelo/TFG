@@ -12,6 +12,8 @@ sys.path.append("/home/raspberrypiserver/Desktop/pqcIoT/pyascon")
 from asconv1 import ascon_hash
 import tkinter as tk
 
+import funciones_auxiliares.estadisticasPDF as archivo
+
 ########### Funciones ########### 
 
 # Genera el recuadro de estadísticas sobre la amplificación de privacidad
@@ -21,6 +23,13 @@ def generarInfoAmplificacion(frame, clave_compartida):
   tk.Label(recuadro, text="Información de la amplificación", font=("Arial",18,"bold")).pack(pady=10)
   tk.Label(recuadro, text="Clave compartida generada", bg="white").pack(pady=5)
   tk.Label(recuadro, text=clave_compartida, bg="white").pack(pady=5)
+  
+  archivo.informacion += f'''
+  =============== AMPLIFICACIÓN ===============
+  Clave compartida generada: {clave_compartida}
+  =============================================
+  
+  '''
 
 # Usa la función hash de ASCON
 def amplificacion(secuencia_bits):

@@ -14,6 +14,8 @@ sys.path.append("/home/raspberrypiserver/Desktop/pqcIoT/pyascon")
 from asconv1 import ascon_hash
 import tkinter as tk
 
+import funciones_auxiliares.estadisticasPDF as archivo
+
 ########### Funciones ########### 
 
 def calcular_hash(secuencia):
@@ -49,6 +51,15 @@ def generarInfoReconciliacion(frame, secuencia_reconciliada, secuencia_server, s
   tk.Label(recuadro, text=secuencia_reconciliada, bg="white").pack(pady=5)
   tk.Label(recuadro, text="Métrica de Hamming", bg="white").pack(pady=5)
   tk.Label(recuadro, text=metricaHamming(secuencia_server, secuencia_client), bg="white").pack(pady=5)
+  
+  archivo.informacion += f'''
+  =============== RECONCILIACIÓN ===============
+  Secuencia de bits de A: {secuencia_server}
+  Secuencia de bits de B: {secuencia_client}
+  Secuencia de bits reconciliada: {secuencia_reconciliada}
+  Métrica de Hamming: {metricaHamming(secuencia_server, secuencia_client)}
+  
+  '''
   
 # Proceso de reconciliación
 def iniciarReconciliacion(conn, secuencia):
