@@ -18,6 +18,8 @@ from funciones_auxiliares.cuantificacion import generarInfoCuantificacion
 from funciones_auxiliares.reconciliacion import generarInfoReconciliacion
 from funciones_auxiliares.amplificacion import generarInfoAmplificacion
 
+import funciones_auxiliares.estadisticasPDF as archivo
+
 
 ########### Variables y parámetros globales ########### 
 
@@ -198,7 +200,35 @@ def amplificacion():
     print("[INTERFAZ]: Enviando comando 'AMPLIFICACION' al cliente.")
     client_socket.sendall("AMPLIFICACION".encode())
 
+def info_proyecto(): 
+  ventana_qr = tk.Toplevel(app) 
+  ventana_qr.title("Información del Proyecto") 
+  ventana_qr.config(bg="white")
+  try: 
+    imagen_qr = Image.open("images.png") 
+    imagen_qr = imagen_qr.resize((250, 250), Image.LANCZOS) 
+    imagen_tk = ImageTk.PhotoImage(imagen_qr)
 
+    etiqueta = tk.Label(ventana_qr, image=imagen_tk, bg="white")
+    etiqueta.image = imagen_tk  # Importante para que no se elimine
+    etiqueta.pack(pady=20)
+
+    texto = tk.Label(ventana_qr, text="Escanea el código para acceder al PDF del proyecto", bg="white", font=("Arial", 12))
+    texto.pack(pady=10)
+
+  except Exception as e: print("Error al cargar el QR:", e)
+
+
+# Función que genera el archivo que resume todas las métricas del proceso
+def generar_archivo():
+  if archivo.informacion:
+    with open("Proceso_de_Generacion_de_Claves.txt", "w") as f:
+      f.write(archivo.informacion)
+    print("[INTERFAZ]: Archivo txt generado.")
+  else:
+    print("[INTERFAZ]: No se ha podido crear el archivo.")
+    
+    
 ####### Estructura programa principal #######
 app = tk.Tk()
 app.config(bg = 'white')
@@ -321,8 +351,8 @@ boton_dos = tk.Button(columna_izquierda, text = "Imagen general del canal", font
 boton_tres = tk.Button(columna_izquierda, text = "Cuantificación", font = app.font, bg = "#5c068c", command = cuantificacion, fg = "white").pack(fill = "x", pady = 5)
 boton_cuatro = tk.Button(columna_izquierda, text = "Reconciliación", font = app.font, bg = "#5c068c", command = reconciliacion, fg = "white").pack(fill = "x", pady = 5)
 boton_cinco = tk.Button(columna_izquierda, text = "Amplificación de privacidad", font = app.font, command = amplificacion, bg = "#5c068c", fg = "white").pack(fill = "x", pady = 5)
-boton_seis = tk.Button(columna_izquierda, text = "Información sobre el proyecto", font = app.font, bg = "#5c068c", fg = "white").pack(fill = "x", pady = 5)
-boton_siete = tk.Button(columna_izquierda, text = "Descargar PDF", font = app.font, bg = "#5c068c", fg="white").pack(fill = "x", pady = 5)
+boton_seis = tk.Button(columna_izquierda, text = "Información sobre el proyecto", command= info_proyecto, font = app.font, bg = "#5c068c", fg = "white").pack(fill = "x", pady = 5)
+boton_siete = tk.Button(columna_izquierda, text = "Descargar PDF", font = app.font, command= generar_archivo, bg = "#5c068c", fg="white").pack(fill = "x", pady = 5)
 barra_separadora = tk.Frame(columna_izquierda, bg = "#5c068c", height = 3).pack(fill = "x", pady = 15)
 
 
