@@ -1,0 +1,54 @@
+
+##################################################
+Trabajo de Fin de Grado: Generación de Claves Compartidas en Dispositivos IoT 
+Universidad de La Laguna
+Grado en Ingeniería Informática
+Autora: Ithaisa Morales Arbelo. alu0101482194@ull.edu.es
+26 04 2025 17:13:27
+##################################################
+
+  =============== SONDEO ===============
+  Estadísticas de la comunicación:
+  Número de paquetes enviados: 20
+  Tiempo entre paquetes: 1
+  Medias simples de RSSI:
+  RSSI A: Media=-12.82
+  RSSI B: Media=-14.38
+  Valores RSSI medios tras hacer un filtrado de ruido
+  RSSI A: Media=-12.82
+  RSSI B: Media=-14.38
+  Entropía del canal
+  Entropía medida por A: 2.56
+  Entropía medida por B: 2.24
+  Valores mínimo y máximo de RSSI del canal entre A y B:
+  RSSI A: Valor máximo=-15, mínimo=-9
+  RSSI B: Valor máximo=-19, mínimo=-11
+  Valores mínimo y máximo de RSSI en el canal de entre todos los dispositivos
+  RSSI A: Valor máximo=-87, mínimo=-34
+  RSSI B: Valor máximo=-115, mínimo=-3
+  
+  
+  =============== CUANTIFICACIÓN ===============
+  Secuencia de bits de A: 1111111111101011
+  Secuencia de bits de B: 1111110111111111
+  Tasa de desacuerdo de bits (BDR, Bit Disagreement Rate): 0.1875
+  Autocorrelación de las secuencias:
+  Autocorrelación de la secuencia de A: -0.2952380952380957
+  Autocorrelación de la secuencia de B: -0.20888888888888837
+  Entropías de las secuencias
+  Entropía de la secuencia de A: 0.5435644431995964
+  Entropía de la secuencia de B: 0.3372900666170139
+  
+  
+  =============== RECONCILIACIÓN ===============
+  Secuencia de bits de A: 1111111111101011
+  Secuencia de bits de B: 1111110111111111
+  Secuencia de bits reconciliada: 1111110111111111
+  Métrica de Hamming: 3
+  
+  
+  =============== AMPLIFICACIÓN ===============
+  Clave compartida generada: a71a71411843f3c69a3b30cad39b2dbf406b243cd6df3db2ec397e11cae3dfed
+  =============================================
+  
+  
