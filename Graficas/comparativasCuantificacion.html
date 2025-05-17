@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Comparativa de los resultados obtenidos por cada algoritmo de Cuantificación</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+      width: 100%;
+      font-family: 'Segoe UI', sans-serif;
+      background-color: #fdfdfd;
+    }
+    #container {
+      height: 100%;
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+    h2 {
+      margin-top: 20px;
+      font-size: 24px;
+      color: #333;
+    }
+    canvas {
+      width: 90vw !important;
+      height: 80vh !important;
+    }
+  </style>
+</head>
+<body>
+  <div id="container">
+    <h2>Comparativa de los resultados obtenidos por cada algoritmo de Cuantificación</h2>
+    <canvas id="radarChart"></canvas>
+  </div>
+
+  <script>
+    const ctx = document.getElementById('radarChart').getContext('2d');
+    new Chart(ctx, {
+      type: 'radar',
+      data: {
+        labels: [
+          'BDR (Tasa de Error de Bits)',
+          'Entropía (aleatoriedad)',
+          'Autocorrelación (valor absoluto)'
+        ],
+        datasets: [
+          {
+            label: 'Algoritmo 1: Cuantificación multibit adaptativa con códigos Gray',
+            data: [0.45, 0.9489982, 0.3095136],
+            backgroundColor: 'rgba(255, 105, 180, 0.2)',
+            borderColor: 'deeppink',
+            pointBackgroundColor: 'deeppink',
+            borderWidth: 3
+          },
+          {
+            label: 'Algoritmo 2: Cuantificación por umbrales (Mathur)',
+            data: [0.2375, 0.4818184, 0.2027237],
+            backgroundColor: 'rgba(255, 165, 0, 0.2)',
+            borderColor: 'orange',
+            pointBackgroundColor: 'orange',
+            borderWidth: 3
+          },
+          {
+            label: 'Algoritmo 3: Cuantificación basada en la desviación típica',
+            data: [0.2250, 0.4862214, 0.1311351],
+            backgroundColor: 'rgba(46, 204, 113, 0.25)',
+            borderColor: 'rgba(46, 204, 113, 1)',
+            pointBackgroundColor: 'rgba(46, 204, 113, 1)',
+            borderWidth: 3
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            position: 'bottom',
+            labels: {
+              font: {
+                size: 14
+              }
+            }
+          },
+          tooltip: {
+            callbacks: {
+              label: function(context) {
+                return `${context.dataset.label}: ${context.formattedValue}`;
+              }
+            }
+          }
+        },
+        scales: {
+          r: {
+            min: 0,
+            max: 1,
+            ticks: {
+              stepSize: 0.2,
+              backdropColor: 'transparent',
+              color: '#555',
+              font: { size: 14 }
+            },
+            pointLabels: {
+              font: { size: 16 },
+              color: '#333'
+            },
+            grid: {
+              circular: true,
+              color: '#ddd'
+            },
+            angleLines: {
+              color: '#ccc'
+            }
+          }
+        }
+      }
+    });
+  </script>
+</body>
+</html>
