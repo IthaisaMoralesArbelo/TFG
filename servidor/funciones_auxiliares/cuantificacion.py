@@ -75,7 +75,8 @@ def autocorrelacion(secuencia):
     return 0
   else :
     return (suma / (n-k)-media**2)/varianza
-    
+
+
 
 # Calcula la entropía de una secuencia de bits
 def entropia(secuencia):

@@ -16,17 +16,21 @@ import funciones_auxiliares.estadisticasPDF as archivo
 
 ########### Funciones ########### 
 
+def formato(cadena, longitud):
+  return '\n'.join(cadena[i:i+longitud] for i in range(0,len(cadena),longitud))
+
 # Genera el recuadro de estadísticas sobre la amplificación de privacidad
 def generarInfoAmplificacion(frame, clave_compartida):
+  clave = formato(clave_compartida,64)
   recuadro = tk.Frame(frame, bg="white", bd=2, relief="solid", padx=10, pady=10)
   recuadro.pack(fill="both", expand=True, padx=20, pady=20)
   tk.Label(recuadro, text="Información de la amplificación", font=("Arial",18,"bold")).pack(pady=10)
   tk.Label(recuadro, text="Clave compartida generada", bg="white").pack(pady=5)
-  tk.Label(recuadro, text=clave_compartida, bg="white").pack(pady=5)
+  tk.Label(recuadro, text=clave, bg="white").pack(pady=5)
   
   archivo.informacion += f'''
   =============== AMPLIFICACIÓN ===============
-  Clave compartida generada: {clave_compartida}
+  Clave compartida generada: {clave}
   =============================================
   
   '''
