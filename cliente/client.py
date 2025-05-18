@@ -27,7 +27,7 @@ from funciones_auxiliares.amplificacion import amplificacion
 INTERFACE = "wlxe4fac46f6fbf"    
 RSSI_FILE = "rssi_log.txt"
 RSSI_FILE_CANAL_B = "rssi_canal_b.txt"
-IP_SERVER = "10.20.50.18" 
+IP_SERVER = "10.20.50.180" 
 mac_cliente = "e4:fa:c4:6f:6f:bf"
 mac_servidor = "e4:fa:c4:6f:6f:6a"
 
@@ -127,6 +127,14 @@ def exchange_rssi(sock, num_paquetes, intervalo):
       print(f"[CLIENT]: Archivo {RSSI_FILE} no encontrado. Se creará uno nuevo.")
     except Exception as e:
       print(f"[CLIENT]: Error al borrar {RSSI_FILE}: {e}")
+    try:
+      os.remove(RSSI_FILE_CANAL_B)
+      print(f"[CLIENT]: Se ha borrado el archivo {RSSI_FILE_CANAL_B} resultante del proceso de sondeo del canal anterior.")
+    except FileNotFoundError:
+      print(f"[CLIENT]: Archivo {RSSI_FILE_CANAL_B} no encontrado. Se creará uno nuevo.")
+    except Exception as e:
+      print(f"[CLIENT]: Error al borrar {RSSI_FILE_CANAL_B}: {e}")
+
 
     print(f"[*] Iniciando captura en la interfaz {INTERFACE}...")
     sniff_thread = threading.Thread(target=sniff_rssi, args=(num_paquetes, intervalo), daemon=True)
@@ -196,10 +204,10 @@ def main():
         valor_medio = media(RSSI_FILE)
         desviacion_tipica = desviacionTipica(valor_medio, RSSI_FILE)
         print(f"[CLIENT]: Valor medio utilizado para la etapa de cuantificacion: {valor_medio}.")
-        secuencia = cuantificacion(valor_medio, desviacion_tipica,16, RSSI_FILE)
+        #secuencia = cuantificacion(valor_medio, desviacion_tipica,16, RSSI_FILE)
         #secuencia = cuantificacion_dos(RSSI_FILE, desviacion_tipica)
         #secuencia = cuantificacion_tres(RSSI_FILE)
-        #secuencia = cuantificacion_cuatro(valor_medio)
+        secuencia = cuantificacion_cuatro(valor_medio)
         print(f"[CLIENT]:Secuencia calculada por el CLIENT en la cuantificacion: {secuencia}.")
         sock.connect((IP_SERVER,5000))
         print("[CLIENT]: Cliente conectado al servidor.")
