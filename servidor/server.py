@@ -31,7 +31,7 @@ RSSI_FILE_CANAL_A = "rssi_canal_a.txt"
 SSID = "RSSI"
 mac_cliente = "e4:fa:c4:6f:6f:bf"
 mac_servidor = "e4:fa:c4:6f:6f:6a"
-
+fichero_tiempos = "tiempos_ejecucion.txt"
 ####################################################
 # Variables globales
 client_secuencia = None
@@ -42,7 +42,7 @@ stop_beacons = False
 stop_sniff = False
 
 ########## valores para paramiko (sustituo de scp) ##########
-CLIENTE_IP = "10.20.50.17"  
+CLIENTE_IP = "10.20.50.181"  
 CLIENTE_USER = "raspberrypiclient"  
 CLIENTE_PASSWORD = "csas1234"  
 CLIENTE_RSSI_FILE = "/home/raspberrypiclient/Desktop/prueba/rssi_log.txt"  
@@ -52,6 +52,12 @@ SERVER_RSSI_FILE_B_GLOBAL = "rssi_canal_b.txt"
 
 
 ########### Funciones ########### 
+#Función que escribe en un fichero los tiempos de ejecución de cada etapa del proceso de generación de claves
+def guardar_tiempos(fichero, nombre_etapa, inicio,fin):
+  tiempo = fin - inicio
+  with open(fichero, "a") as f:
+    f.write(f"[{nombre_etapa}]= {tiempo}.\n")
+
 
 # Función para recoger los archivos de mediciones del cliente
 def obtener_archivo_cliente():
@@ -252,7 +258,10 @@ def main():
         print("[SERVER]: Esperando a cliente que se conecte para comenzar con la captura de paquetes...")
         conn, addr = sock.accept()
         print(f"[SERVER]: Cliente conectado ({addr}).")
+        start_sondeo = time.perf_counter()
         exchange_rssi(conn, num_paquetes, intervalo)
+        end_sondeo = time.perf_counter()
+        guardar_tiempos(fichero_tiempos, "SONDEO DEL CANAL", start_sondeo, end_sondeo)
         sondeo_check = True
         conn.close()
         obtener_archivo_cliente()
@@ -269,10 +278,13 @@ def main():
         valor_medio = media(RSSI_FILE)
         desviacion_tipica = desviacionTipica(valor_medio, RSSI_FILE)
         print(f"[SERVER]: Valor medio utilizado para la etapa de cuantificacion: {valor_medio}.")
-        secuencia = cuantificacion(valor_medio,desviacion_tipica,16,RSSI_FILE)
+        #secuencia = cuantificacion(valor_medio,desviacion_tipica,16,RSSI_FILE)
         #secuencia = cuantificacion_dos(RSSI_FILE,desviacion_tipica)
         #secuencia = cuantificacion_tres(RSSI_FILE)
-        #secuencia = cuantificacion_cuatro(valor_medio)
+        start_cuantificacion = time.perf_counter()
+        secuencia = cuantificacion_cuatro(valor_medio)
+        end_cuantificacion = time.perf_counter()
+        guardar_tiempos(fichero_tiempos, "CUANTIFICACIÓN",  start_cuantificacion, end_cuantificacion)
         print(f"[SERVER]: Secuencia calculada por el SERVER en la cuantificacion: {secuencia}")
         print("[SERVER]: Esperando a cliente que se conecte para enviarle la secuencia generada...")
         conn, addr = sock.accept()
@@ -298,7 +310,10 @@ def main():
         print("[SERVER]: Esperando a cliente que se conecte.")
         #conn, addr = sock.accept()
         print(f"[SERVER]: Cliente conectado ({addr})")
+        start_reconciliacion = time.perf_counter()
         secuencia_reconciliacion = iniciarReconciliacion(conn, secuencia)
+        end_reconciliacion = time.perf_counter()
+        guardar_tiempos(fichero_tiempos, "RECONCILIACIÓN", start_reconciliacion, end_reconciliacion)
         secuencia_reconciliacion = ''.join(secuencia_reconciliacion)
         conn.close()
         print(f"[SERVER]: Secuencia resultante tras la reconciliación: {secuencia_reconciliacion}.")
@@ -315,9 +330,14 @@ def main():
         print("[SERVER]: ERROR. Debe realizar las etapas anteriores en el orden indicado.")
       else:
         secuencia_bits = ''.join(secuencia_reconciliacion).encode() 
+        start_amplificacion = time.perf_counter()
         clave_compartida = amplificacion(secuencia_bits)
+        end_amplificacion = time.perf_counter()
+        guardar_tiempos(fichero_tiempos, "AMPLIFICACIÓN DEL CANAL", start_amplificacion, end_amplificacion)
         amplificacion_check = True
-        conn_i.send(f"INFO_AMPLIFICACION,{clave_compartida.hex()}".encode())
+        clave_hexadecimal = clave_compartida.hex()
+        clave_binaria = ''.join(f"{byte:08b}" for byte in clave_compartida)
+        conn_i.send(f"INFO_AMPLIFICACION,{clave_binaria}".encode())
         print(f"CLAVE COMPARTIDA GENERADA : {clave_compartida.hex()}")
  
     elif comando == "CERRAR":

@@ -23,8 +23,8 @@ import funciones_auxiliares.estadisticasPDF as archivo
 
 ########### Variables y parámetros globales ########### 
 
-SERVER_IP = "10.20.50.18"
-CLIENT_IP = "10.20.50.17"
+SERVER_IP = "10.20.50.180"
+CLIENT_IP = "10.20.50.181"
 
 # Variables para los sockets
 server_socket = None
